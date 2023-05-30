@@ -1,0 +1,25 @@
+{
+    "name": "environment-safe-canvas",
+    "version": "0.0.1",
+    "main": "environment-safe-canvas.js",
+    "devDependencies": {
+        "canvas": "^2.11.2",
+        "chai": "^4.3.7",
+        "environment-safe-chai": "^0.0.1",
+        "mocha": "^10.2.0",
+        "wing-kong": "^0.1.0"
+    },
+    "type": "module",
+    "scripts": {
+        "lint": "./node_modules/.bin/eslint *.js src/*.js test/*.js",
+        "test": "./node_modules/.bin/mocha",
+        "browser-test": "open http://localhost:8000/test/test.html; npx http-server -p 8000",
+        "container-test": "docker build . -t environment-safe-canvas -f ./containers/test.dockerfile; docker logs --follow \"$(docker run -d environment-safe-canvas)\""
+    },
+    "dependencies": {
+        "browser-or-node": "^2.1.1"
+    },
+    "peerDependencies": {
+        "canvas": "^2.11.2"
+    }
+}
