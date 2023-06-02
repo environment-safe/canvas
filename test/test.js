@@ -1,10 +1,18 @@
+import { isBrowser, isJsDom } from 'browser-or-node';
 import { chai } from 'environment-safe-chai';
 const should = chai.should();
 import { Canvas } from '../environment-safe-canvas.js';
 
+const nonEmpty = (array)=>{
+    return Array.prototype.filter.call(
+        array, 
+        (value) => !(value === 0 || value === 255) 
+    );
+}
+
 describe('environment-safe-canvas', ()=>{
-   describe('performs a simple test suite', ()=>{
-        it('works as expected', ()=>{
+   describe('canvas interface', ()=>{
+        it('can draw a rect on an empty canvas', ()=>{
             const canvas = new Canvas({ width: 200, height: 200 });
             const ctx = canvas.getContext("2d");
             
@@ -24,6 +32,34 @@ describe('environment-safe-canvas', ()=>{
             }
             numNonEmpty.should.equal(15000);
             numEmpty.should.equal(25000);
+        });
+    });
+    
+    describe('canvas interface', ()=>{
+        it('reads as expected', async ()=>{
+            const canvas = await Canvas.load('test/racoon.png');
+            const context = canvas.getContext('2d');
+            const { data: pixels } = context.getImageData(0, 0, canvas.width, canvas.height);
+            const nonEmptyValues = nonEmpty(pixels);
+            nonEmptyValues.length.should.be.above(0);
+        });
+        
+        it('writes as expected', async function(){
+            const canvas = await Canvas.load('test/racoon.png');
+            const context = canvas.getContext('2d');
+            const { data: pixels } = context.getImageData(0, 0, canvas.width, canvas.height);
+            await Canvas.save('test/racoon-copy.png', canvas);
+            if(!(isBrowser || isJsDom)){
+                const canvas2 = await Canvas.load('test/racoon-copy.png');
+                const context2 = canvas2.getContext('2d');
+                const { data: pixels2 } = context2.getImageData(
+                    0, 0, canvas2.width, canvas2.height
+                );
+                nonEmpty(pixels).should.deep.equal(nonEmpty(pixels2));
+                await Canvas.delete('test/racoon-copy.png');
+            }else{
+                console.log('If a download happened, it worked.');
+            }
         });
     });
 });

@@ -13,17 +13,29 @@ import { Canvas } from 'environment-safe-canvas';
 const myCanvas = new Canvas({ height: 200, width: 200 });
 // use canvas
 ```
-when you run in the browser, you'll need your importmap to look like
-
-```json
-{
-    "imports": {
-        "module": "<any module location, this is a dummy that just needs to load>",
-        "browser-or-node": "/node_modules/browser-or-node/src/index.js"
+when you run in the browser(without a build), you'll need your head to have:
+<script src="
+    /node_modules/file-saver/dist/FileSaver.js
+"></script>
+<script type="importmap">
+    {
+        "imports": {
+            "chai": "/node_modules/chai/chai.js",
+            "environment-safe-chai": "/node_modules/environment-safe-chai/environment-safe-chai.js",
+            "module": "/node_modules/browser-or-node/src/index.js",
+            "browser-or-node": "/node_modules/browser-or-node/src/index.js"
+        }
     }
-}
+</script>
 
-```
+Nonstandard Methods
+-------------------
+
+**Canvas.save(location, canvas);**
+
+**Canvas.load(location[, canvas])**
+
+**Canvas.delete(location)**
 
 Testing
 -------
