@@ -122,6 +122,7 @@ Image.load = async (location, canvas)=>{
             if(!fs) fs = require('fs');
             
             fs.readFile(location, function(err, data){
+                if(err) return reject(err);
                 img.src = data;
             });
         }else{
