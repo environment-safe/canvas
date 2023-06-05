@@ -77,6 +77,17 @@ Canvas.save = async (location, canvas, type='image/png')=>{
     });
 }
 
+Canvas.url = async (relative, metaUrl)=>{
+    if(
+        typeof process === 'object' && 
+        typeof process.versions === 'object' && 
+        typeof process.versions.node !== 'undefined'
+    ){
+        return new URL('../node_modules/'+location, import.meta.url)
+    }
+    return '../node_modules/'+location;
+}
+
 Canvas.delete = async (location)=>{
     if(!(isBrowser || isJsDom)){
         ensureRequire();

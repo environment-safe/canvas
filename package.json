@@ -1,6 +1,6 @@
 {
     "name": "environment-safe-canvas",
-    "version": "0.1.1",
+    "version": "1.0.0",
     "main": "environment-safe-canvas.js",
     "devDependencies": {
         "canvas": "^2.11.2",
