@@ -1,8 +1,12 @@
 import { isBrowser, isJsDom } from 'browser-or-node';
+import fileSaver from 'file-saver';
+const { saveAs } = fileSaver;
 import * as mod from 'module';
 let canvas = null;
 let require = null;
 let fs = null;
+let Readable = null;
+let finished = null;
 let newCanvas = null;
 const ensureRequire = ()=> (!require) && (require = mod.createRequire(import.meta.url));
 const ensureCanvas = ()=> (!canvas) && ensureRequire() && (canvas = require("canvas"));
@@ -77,13 +81,16 @@ Canvas.save = async (location, canvas, type='image/png')=>{
     });
 }
 
-Canvas.url = async (relative, metaUrl)=>{
+Canvas.url = (location, metaUrl)=>{
     if(
         typeof process === 'object' && 
         typeof process.versions === 'object' && 
         typeof process.versions.node !== 'undefined'
     ){
         return new URL('../node_modules/'+location, import.meta.url)
+    }
+    if(location.toString().indexOf('://') !== -1){
+        return location;
     }
     return '../node_modules/'+location;
 }
@@ -117,6 +124,7 @@ if(!(isBrowser || isJsDom)){
 }else{
     Image = window.Image;
 }
+let download = null;
 Image.load = async (location, canvas)=>{
     let localLocation = null;
     return await new Promise((resolve, reject)=>{
@@ -131,37 +139,45 @@ Image.load = async (location, canvas)=>{
             var src = '';
             ensureRequire();
             if(!fs) fs = require('fs');
-            
-            fs.readFile(location, function(err, data){
-                if(err) return reject(err);
-                img.src = data;
-            });
+            if(location.indexOf('://') !== -1 ){
+                img.src = location;
+            }else{
+                fs.readFile(location, function(err, data){
+                    if(err) return reject(err);
+                    img.src = data;
+                });
+            }
         }else{
-            //this feels suspect/unoptimized. audit.
-            const parts1 = window.location.pathname.split('/');
-            parts1.pop(); //throw away script name
-            const parts2 = (location.pathname || location).toString().split('/');
-            while(parts2[parts2.length-1] === '.' || parts2[parts2.length-1] === '..'){
-                if(parts2[parts2.length-1] === '.'){
-                    parts2.pop(); // toss current dir marker
+            if(location.indexOf('://') !== -1){
+                img.crossOrigin = "Anonymous";
+                img.src = location;
+            }else{
+                //this feels suspect/unoptimized. audit.
+                const parts1 = window.location.pathname.split('/');
+                parts1.pop(); //throw away script name
+                const parts2 = (location.pathname || location).toString().split('/');
+                while(parts2[parts2.length-1] === '.' || parts2[parts2.length-1] === '..'){
+                    if(parts2[parts2.length-1] === '.'){
+                        parts2.pop(); // toss current dir marker
+                    }
+                    if(parts2[parts2.length-1] === '..'){
+                        parts2.pop(); // toss current dir marker
+                        parts1.pop(); // go up one dir
+                    }
                 }
-                if(parts2[parts2.length-1] === '..'){
-                    parts2.pop(); // toss current dir marker
-                    parts1.pop(); // go up one dir
+                //find longest common chain
+                let path1 = parts1.join('/');
+                let path2 = parts2.join('/');
+                const common = longestCommonSubstring(path1, path2);
+                if(path1.endsWith(common) && path2.startsWith(common)){
+                    path1 = path1.substring(0, path1.length - common.length);
+                    if(path1 === '/') path1 = '';
+                    //path2 = path2.substring(common.length+1);
                 }
+                const thePath = path1.split('/').concat(path2.split('/')).join('/');
+                
+                img.src = thePath;
             }
-            //find longest common chain
-            let path1 = parts1.join('/');
-            let path2 = parts2.join('/');
-            const common = longestCommonSubstring(path1, path2);
-            if(path1.endsWith(common) && path2.startsWith(common)){
-                path1 = path1.substring(0, path1.length - common.length);
-                if(path1 === '/') path1 = '';
-                //path2 = path2.substring(common.length+1);
-            }
-            const thePath = path1.split('/').concat(path2.split('/')).join('/');
-            
-            img.src = thePath;
         }
     });
 }

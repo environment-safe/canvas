@@ -61,5 +61,24 @@ describe('environment-safe-canvas', ()=>{
                 console.log('If a download happened, it worked.');
             }
         });
+        
+        it('writes as expected', async function(){
+               this.timeout(8000);
+              const canvas = await Canvas.load('https://i.imgur.com/zydglXB.jpeg');
+              const context = canvas.getContext('2d');
+              const { data: pixels } = context.getImageData(0, 0, canvas.width, canvas.height);
+              await Canvas.save('test/imagur-copy.png', canvas);
+              if(!(isBrowser || isJsDom)){
+                  const canvas2 = await Canvas.load('test/imagur-copy.png');
+                  const context2 = canvas2.getContext('2d');
+                  const { data: pixels2 } = context2.getImageData(
+                      0, 0, canvas2.width, canvas2.height
+                  );
+                  nonEmpty(pixels).should.deep.equal(nonEmpty(pixels2));
+                  await Canvas.delete('test/imagur-copy.png');
+              }else{
+                  console.log('If a download happened, it worked.');
+              }
+          });
     });
 });
