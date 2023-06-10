@@ -1,6 +1,5 @@
 import { isBrowser, isJsDom } from 'browser-or-node';
-import fileSaver from 'file-saver';
-const { saveAs } = fileSaver;
+import { saveAs } from './file-saver.js';
 import * as mod from 'module';
 let canvas = null;
 let require = null;
