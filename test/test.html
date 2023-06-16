@@ -7,11 +7,6 @@
   <body>
     <div class="game-world"></div>
     <div id="mocha"></div>
-    <script src="../node_modules/mocha/mocha.js"></script>
-    <script>mocha.setup('bdd')</script>
-    <script src="
-        http://localhost:8000/file-saver.js
-    "></script>
     <script type="importmap">
         {
             "imports": {
@@ -23,6 +18,11 @@
             }
         }
     </script>
+    <script src="../node_modules/mocha/mocha.js"></script>
+    <script>mocha.setup('bdd')</script>
+    <script src="
+        http://localhost:8000/file-saver.js
+    "></script>
     <script type="module" src="test.js"></script>
     <script type="module">
       mocha.run();
