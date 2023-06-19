@@ -1,7 +1,7 @@
 import { isBrowser, isJsDom } from 'browser-or-node';
 import { chai } from 'environment-safe-chai';
 const should = chai.should();
-import { Canvas } from '../environment-safe-canvas.js';
+import { Canvas } from '../environment-safe-canvas.mjs';
 
 const nonEmpty = (array)=>{
     return Array.prototype.filter.call(

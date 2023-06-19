@@ -166,4 +166,6 @@ var saveAs = _global.saveAs || (
   }
 )
 
-module.exports = { saveAs };
+export default { saveAs };
+
+export { saveAs }

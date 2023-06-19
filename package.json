@@ -1,7 +1,8 @@
 {
     "name": "environment-safe-canvas",
-    "version": "1.1.1",
+    "version": "2.0.0",
     "main": "environment-safe-canvas.js",
+    "module": "environment-safe-canvas.mjs",
     "devDependencies": {
         "canvas": "^2.11.2",
         "chai": "^4.3.7",
@@ -9,7 +10,6 @@
         "mocha": "^10.2.0",
         "wing-kong": "^0.1.0"
     },
-    "type": "module",
     "scripts": {
         "lint": "./node_modules/.bin/eslint *.js src/*.js test/*.js",
         "test": "./node_modules/.bin/mocha",

@@ -1,14 +1,15 @@
-const { isBrowser, isJsDom } = require('browser-or-node');
-const { saveAs } = require('./file-saver.js');
-const mod = require('module');
-const canvas = require("canvas");
-const fs = require("fs");
+import { isBrowser, isJsDom } from 'browser-or-node';
+import { saveAs } from './file-saver.mjs';
+import * as mod from 'module';
+let canvas = null;
+let require = null;
+let fs = null;
 let Readable = null;
 let finished = null;
 let newCanvas = null;
-const ensureRequire = ()=> {};
-const ensureCanvas = ()=> {};
-const ensureFilesystem = ()=> {};
+const ensureRequire = ()=> (!require) && (require = mod.createRequire(import.meta.url));
+const ensureCanvas = ()=> (!canvas) && ensureRequire() && (canvas = require("canvas"));
+const ensureFilesystem = ()=> (!fs) && ensureRequire() && (fs = require("fs"));
 
 function longestCommonSubstring(str1, str2) {
     if (str1 === str2) return str2;
@@ -85,7 +86,7 @@ Canvas.url = (location, metaUrl)=>{
         typeof process.versions === 'object' && 
         typeof process.versions.node !== 'undefined'
     ){
-        return new URL('../node_modules/'+location, __dirname)
+        return new URL('../node_modules/'+location, import.meta.url)
     }
     if(location.toString().indexOf('://') !== -1){
         return location;
@@ -180,4 +181,4 @@ Image.load = async (location, canvas)=>{
     });
 }
 
-module.exports = { Canvas, Image };
+export { Canvas, Image };
