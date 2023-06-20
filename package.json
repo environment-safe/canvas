@@ -1,6 +1,6 @@
 {
     "name": "environment-safe-canvas",
-    "version": "2.0.0",
+    "version": "2.1.0",
     "main": "environment-safe-canvas.cjs",
     "module": "environment-safe-canvas.mjs",
     "devDependencies": {
