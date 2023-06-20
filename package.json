@@ -1,7 +1,7 @@
 {
     "name": "environment-safe-canvas",
     "version": "2.0.0",
-    "main": "environment-safe-canvas.js",
+    "main": "environment-safe-canvas.cjs",
     "module": "environment-safe-canvas.mjs",
     "devDependencies": {
         "canvas": "^2.11.2",
@@ -12,7 +12,9 @@
     },
     "scripts": {
         "lint": "./node_modules/.bin/eslint *.js src/*.js test/*.js",
-        "test": "./node_modules/.bin/mocha",
+        "test":"npm run test-imports; npm run test-commonjs",
+        "test-imports": "./node_modules/.bin/mocha test/test.mjs",
+        "test-commonjs": "./node_modules/.bin/mocha test/test.cjs",
         "browser-test": "open http://localhost:8000/test/test.html; npx http-server --cors -p 8000",
         "container-test": "docker build . -t environment-safe-canvas -f ./containers/test.dockerfile; docker logs --follow \"$(docker run -d environment-safe-canvas)\""
     },

@@ -1,5 +1,5 @@
 const { isBrowser, isJsDom } = require('browser-or-node');
-const { saveAs } = require('./file-saver.js');
+const { saveAs } = require('./file-saver.cjs');
 const mod = require('module');
 const canvas = require("canvas");
 const fs = require("fs");
