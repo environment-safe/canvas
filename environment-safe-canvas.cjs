@@ -123,7 +123,8 @@ if(!(isBrowser || isJsDom)){
     Image = window.Image;
 }
 let download = null;
-Image.load = async (location, canvas)=>{
+Image.load = async (loc, canvas)=>{
+    let location = typeof loc === 'string'?loc:loc+'';
     let localLocation = null;
     return await new Promise((resolve, reject)=>{
         var img = new Image();
@@ -146,6 +147,7 @@ Image.load = async (location, canvas)=>{
                 });
             }
         }else{
+            if(location.toLowerCase().indexOf('file://') === 0) location = location.substring(7);
             if(location.indexOf('://') !== -1){
                 img.crossOrigin = "Anonymous";
                 img.src = location;
