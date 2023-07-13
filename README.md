@@ -8,26 +8,22 @@ Usage
 -----
 
 ```javascript
-import { Canvas } from 'environment-safe-canvas/environment-safe-canvas.mjs';
+import { Canvas } from 'environment-safe-canvas';
 //or
-const { Canvas } = require('environment-safe-canvas/environment-safe-canvas.js');
+const { Canvas } = require('environment-safe-canvas');
 //...
 const myCanvas = new Canvas({ height: 200, width: 200 });
 // use canvas
 ```
 when you run in the browser(without a build), you'll need your head to have:
 ```html
-<script type="importmap">
-    {
-        "imports": {
-            "chai": "/node_modules/chai/chai.js",
-            "environment-safe-chai": "/node_modules/environment-safe-chai/environment-safe-chai.mjs",
-            "module": "/node_modules/browser-or-node/src/index.js",
-            "file-saver": "/file-saver.js",
-            "browser-or-node": "/node_modules/browser-or-node/src/index.js"
-        }
-    }
-</script>
+<script type="importmap" >{ "imports": {
+    "chai": "/node_modules/chai/chai.js",
+    "@environment-safe/chai": "/node_modules/@environment-safe/chai/src/index.mjs",
+    "module": "/node_modules/@open-automaton/moka/src/dummy.mjs",
+    "file-saver": "/src/file-saver.js",
+    "browser-or-node": "/node_modules/browser-or-node/src/index.js"
+} }</script>
 ```
 
 Nonstandard Methods

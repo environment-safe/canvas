@@ -1,27 +1,100 @@
 {
-    "name": "environment-safe-canvas",
-    "version": "2.2.0",
-    "main": "environment-safe-canvas.cjs",
-    "module": "environment-safe-canvas.mjs",
+    "name": "@environment-safe/canvas",
+    "version": "3.0.0",
+    "type": "module",
+    "main": "dist/index.mjs",
+    "module": "src/index.mjs",
+    "commonjs": "dist/index.cjs",
+    "exports": {
+        ".": {
+            "import": "./src/index.mjs",
+            "require": "./dist/index.cjs"
+        },
+        "./src/file-saver.mjs": {
+            "import": "./src/file-saver.mjs",
+            "require": "./dist/file-saver.cjs"
+        },
+        "./dist/file-saver.cjs": {
+            "import": "./src/file-saver.mjs",
+            "require": "./dist/file-saver.cjs"
+        },
+        "./index.js": {
+            "import": "./src/index.mjs",
+            "require": "./dist/index.cjs"
+        }
+    },
+    "homepage": "https://github.com/environment-safe/canvas",
+    "description": "Use canvas in a uniform way across commonjs/modules and node/browser",
+    "keywords": [
+        "native",
+        "esmodules",
+        "browser",
+        "canvas"
+    ],
+    "author": "Abbey Hawk Sparrow <@khrome> (http://patternweaver.com)",
+    "contributors": [],
+    "repository": {
+        "type": "git",
+        "url": "git@github.com:environment-safe/canvas.git"
+    },
+    "bugs": {
+        "url": "https://github.com/environment-safe/canvas/issues"
+    },
+    "license": "MIT",
+    "moka": {
+        "firefox": {
+            "engine": "@open-automaton/playwright-mining-engine",
+            "options": {
+                "type": "firefox"
+            }
+        },
+        "chrome": {
+            "engine": "@open-automaton/playwright-mining-engine",
+            "options": {
+                "type": "chromium"
+            }
+        },
+        "safari": {
+            "engine": "@open-automaton/playwright-mining-engine",
+            "options": {
+                "type": "webkit"
+            }
+        },
+        "stub": "node_modules/@open-automaton/moka/src/stub.mjs",
+        "stubs": [
+            "express",
+            "module",
+            "path",
+            "@babel/cli",
+            "@babel"
+        ],
+        "shims": {
+            "chai": "node_modules/chai/chai.js",
+            "browser-or-node": "node_modules/browser-or-node/src/index.js"
+        }
+    },
     "devDependencies": {
+        "@environment-safe/chai": "^0.1.0",
+        "@open-automaton/moka": "^0.0.2",
         "canvas": "^2.11.2",
         "chai": "^4.3.7",
-        "environment-safe-chai": "^0.0.1",
-        "mocha": "^10.2.0",
-        "wing-kong": "^0.1.0"
+        "mocha": "^10.2.0"
     },
     "scripts": {
-        "lint": "./node_modules/.bin/eslint *.js src/*.js test/*.js",
-        "test":"npm run test-imports; npm run test-commonjs",
-        "test-imports": "./node_modules/.bin/mocha test/test.mjs",
-        "test-commonjs": "./node_modules/.bin/mocha test/test.cjs",
-        "browser-test": "open http://localhost:8000/test/test.html; npx http-server --cors -p 8000",
-        "container-test": "docker build . -t environment-safe-canvas -f ./containers/test.dockerfile; docker logs --follow \"$(docker run -d environment-safe-canvas)\""
+        "lint": "./node_modules/.bin/eslint src/*.mjs test/*.mjs",
+        "import-test": "./node_modules/.bin/mocha test/test.mjs",
+        "require-test": "./node_modules/.bin/mocha test/test.cjs",
+        "test": "npm run import-test; npm run headless-browser-test; npm run require-test",
+        "headless-browser-test": "npm run headless-chrome-test; npm run headless-firefox-test; npm run headless-safari-test",
+        "headless-chrome-test": "moka --server . --browser chrome  --relaxed --prefix ../ test/test.mjs",
+        "headless-firefox-test": "moka --server . --browser firefox --relaxed --prefix ../ test/test.mjs",
+        "headless-safari-test": "moka --server . --browser safari --relaxed --prefix ../ test/test.mjs",
+        "browser-test": "moka --server . --local-browser --relaxed --prefix ../ test/test.mjs",
+        "container-test": "docker build . -t environment-safe-package.json -f ./containers/test.dockerfile; docker logs --follow \"$(docker run -d environment-safe-package.json)\"",
+        "prepare": "husky install"
     },
     "dependencies": {
-        "browser-or-node": "^2.1.1",
-        "file-saver": "^2.0.5",
-        "file-saver-es": "^2.0.5"
+        "browser-or-node": "^2.1.1"
     },
     "peerDependencies": {
         "canvas": "^2.11.2"

@@ -1,7 +1,8 @@
 import { isBrowser, isJsDom } from 'browser-or-node';
-import { chai } from 'environment-safe-chai';
+import { it } from '@open-automaton/moka';
+import { chai } from '@environment-safe/chai';
 const should = chai.should();
-import { Canvas } from '../environment-safe-canvas.mjs';
+import { Canvas } from '../src/index.mjs';
 
 const nonEmpty = (array)=>{
     return Array.prototype.filter.call(
