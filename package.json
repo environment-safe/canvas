@@ -21,6 +21,10 @@
         "./index.js": {
             "import": "./src/index.mjs",
             "require": "./dist/index.cjs"
+        },
+        "./canvas.js": {
+            "import": "./src/index.mjs",
+            "require": "./dist/index.cjs"
         }
     },
     "homepage": "https://github.com/environment-safe/canvas",
@@ -78,6 +82,8 @@
         "@open-automaton/moka": "^0.0.2",
         "canvas": "^2.11.2",
         "chai": "^4.3.7",
+        "eslint": "^8.44.0",
+        "husky": "^8.0.3",
         "mocha": "^10.2.0"
     },
     "scripts": {

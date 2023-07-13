@@ -1,17 +1,16 @@
+/* global Buffer : false */
 import { isBrowser, isJsDom } from 'browser-or-node';
 import { saveAs } from './file-saver.mjs';
 import * as mod from 'module';
 let canvas = null;
 let require = null;
 let fs = null;
-let Readable = null;
-let finished = null;
 let newCanvas = null;
 const ensureRequire = ()=> (!require) && (require = mod.createRequire(import.meta.url));
-const ensureCanvas = ()=> (!canvas) && ensureRequire() && (canvas = require("canvas"));
-const ensureFilesystem = ()=> (!fs) && ensureRequire() && (fs = require("fs"));
+const ensureCanvas = ()=> (!canvas) && ensureRequire() && (canvas = require('canvas'));
+//const ensureFilesystem = ()=> (!fs) && ensureRequire() && (fs = require('fs'));
 
-function longestCommonSubstring(str1, str2) {
+function longestCommonSubstring(str1, str2){
     if (str1 === str2) return str2;
     if (!str2.split('').some(ele => str1.includes(ele))) return '';
     let commonSubStr = '';
@@ -43,7 +42,7 @@ const Canvas = function(options={}){
         newCanvas = canvas.createCanvas(options.width, options.height);
         
     }else{
-        newCanvas = document.createElement("canvas");
+        newCanvas = document.createElement('canvas');
         const ctx = newCanvas.getContext('2d');
         ctx.canvas.width  = options.width;
         ctx.canvas.height = options.height;
@@ -53,7 +52,7 @@ const Canvas = function(options={}){
     if(options.id) newCanvas.id  = options.id;
     newCanvas.hidden = true;
     return newCanvas;
-}
+};
 let Image = null;
 
 //env safe save fn
@@ -69,7 +68,7 @@ Canvas.save = async (location, canvas, type='image/png')=>{
                 fs.writeFile(location, buffer, function(err2){
                     if(err2) return reject(err2);
                     resolve(buffer);
-                })
+                });
             });
         }else{
             canvas.toBlob((blob)=>{
@@ -78,7 +77,7 @@ Canvas.save = async (location, canvas, type='image/png')=>{
             }, type);
         }
     });
-}
+};
 
 Canvas.url = (location, metaUrl)=>{
     if(
@@ -86,13 +85,13 @@ Canvas.url = (location, metaUrl)=>{
         typeof process.versions === 'object' && 
         typeof process.versions.node !== 'undefined'
     ){
-        return new URL('../node_modules/'+location, import.meta.url)
+        return new URL('../node_modules/'+location, import.meta.url);
     }
     if(location.toString().indexOf('://') !== -1){
         return location;
     }
     return '../node_modules/'+location;
-}
+};
 
 Canvas.delete = async (location)=>{
     if(!(isBrowser || isJsDom)){
@@ -102,7 +101,7 @@ Canvas.delete = async (location)=>{
     }else{
         console.log('Browser created files must be deleted by hand.');
     }
-}
+};
 
 Canvas.load = async (location, incomingCanvas)=>{
     const image = await Image.load(location);
@@ -113,7 +112,7 @@ Canvas.load = async (location, incomingCanvas)=>{
     const context = canvas.getContext('2d');
     context.drawImage(image, 0, 0, image.width, image.height);
     return canvas;
-}
+};
 //env safe save fn
 
 //env safe Image reference
@@ -123,20 +122,20 @@ if(!(isBrowser || isJsDom)){
 }else{
     Image = window.Image;
 }
-let download = null;
+//let download = null;
 Image.load = async (loc, canvas)=>{
     let location = typeof loc === 'string'?loc:loc+'';
-    let localLocation = null;
+    //let localLocation = null;
     return await new Promise((resolve, reject)=>{
         var img = new Image();
         img.onload = function(){
-            resolve(img)
+            resolve(img);
         };
         img.onerror = function(err){
             reject(err);
         };
         if(!(isBrowser || isJsDom)){
-            var src = '';
+            //var src = '';
             ensureRequire();
             if(!fs) fs = require('fs');
             if(location.toLowerCase().indexOf('file://') === 0) location = location.substring(7);
@@ -150,7 +149,7 @@ Image.load = async (loc, canvas)=>{
             }
         }else{
             if(location.indexOf('://') !== -1){
-                img.crossOrigin = "Anonymous";
+                img.crossOrigin = 'Anonymous';
                 img.src = location;
             }else{
                 //this feels suspect/unoptimized. audit.
@@ -181,6 +180,6 @@ Image.load = async (loc, canvas)=>{
             }
         }
     });
-}
+};
 
 export { Canvas, Image };
