@@ -1,5 +1,5 @@
-environment-safe-canvas
-=======================
+@environment-safe/canvas
+========================
 
 
 There's a great node canvas and a great browser canvas, but there's not a great way to write 1 script that works in the browser and in node. This sorts out the rough edges.
@@ -8,9 +8,9 @@ Usage
 -----
 
 ```javascript
-import { Canvas } from 'environment-safe-canvas';
+import { Canvas } from '@environment-safe/canvas';
 //or
-const { Canvas } = require('environment-safe-canvas');
+const { Canvas } = require('@environment-safe/canvas');
 //...
 const myCanvas = new Canvas({ height: 200, width: 200 });
 // use canvas
