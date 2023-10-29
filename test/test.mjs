@@ -1,9 +1,10 @@
 /* global describe : false */
-import { isBrowser, isJsDom } from 'browser-or-node';
-import { it } from '@open-automaton/moka';
+import { isBrowser, isJsDom } from '@environment-safe/runtime-context';
+import { it, configure } from '@open-automaton/moka';
 import { chai } from '@environment-safe/chai';
+import { Download } from '@environment-safe/file';
 const should = chai.should();
-import { Canvas } from '../src/index.mjs';
+import { Canvas, ImageFile } from '../src/index.mjs';
 
 const nonEmpty = (array)=>{
     return Array.prototype.filter.call(
@@ -13,6 +14,18 @@ const nonEmpty = (array)=>{
 };
 
 describe('environment-safe-canvas', ()=>{
+    const download = new Download();
+    /*const filesystemImageName = Path.join(
+        Path.location('images'), 
+        `image${Math.floor( Math.random() * 1000000)}.png`
+    );*/
+    configure({
+        // dialog : async (context, actions)=> await actions.confirm(), // OK everything,
+        //wantsInput : async (context, actions)=> await actions.click('#mocha'), // click everything
+        downloads: (dl)=>{
+            download.observe(dl);
+        }
+    });
     describe('canvas interface', ()=>{
         it('can draw a rect on an empty canvas', ()=>{
             should.exist(Canvas);
@@ -48,9 +61,11 @@ describe('environment-safe-canvas', ()=>{
         });
         
         it('writes local as expected', async function(){
+            this.timeout(8000);
             const canvas = await Canvas.load('test/racoon.png');
             const context = canvas.getContext('2d');
             const { data: pixels } = context.getImageData(0, 0, canvas.width, canvas.height);
+            const anticipatedDownload = download.expect();
             await Canvas.save('test/racoon-copy.png', canvas);
             if(!(isBrowser || isJsDom)){
                 const canvas2 = await Canvas.load('test/racoon-copy.png');
@@ -61,7 +76,7 @@ describe('environment-safe-canvas', ()=>{
                 nonEmpty(pixels).should.deep.equal(nonEmpty(pixels2));
                 await Canvas.delete('test/racoon-copy.png');
             }else{
-                console.log('If a download happened, it worked.');
+                await anticipatedDownload;
             }
         });
         
@@ -70,6 +85,7 @@ describe('environment-safe-canvas', ()=>{
             const canvas = await Canvas.load('https://i.imgur.com/zydglXB.jpeg');
             const context = canvas.getContext('2d');
             const { data: pixels } = context.getImageData(0, 0, canvas.width, canvas.height);
+            const anticipatedDownload = download.expect();
             await Canvas.save('test/imagur-copy.png', canvas);
             if(!(isBrowser || isJsDom)){
                 const canvas2 = await Canvas.load('test/imagur-copy.png');
@@ -80,8 +96,20 @@ describe('environment-safe-canvas', ()=>{
                 nonEmpty(pixels).should.deep.equal(nonEmpty(pixels2));
                 await Canvas.delete('test/imagur-copy.png');
             }else{
-                console.log('If a download happened, it worked.');
+                await anticipatedDownload;
             }
+        });
+    });
+    
+    describe('works with the file interface', ()=>{
+        it('can load a canvas, then save a file', async function(){
+            this.timeout(8000);
+            const canvas = await Canvas.load('https://i.imgur.com/zydglXB.jpeg');
+            const file = await ImageFile.from(canvas);
+            // no file path means auto-save to tmp in node
+            const anticipatedDownload = download.expect();
+            await file.save();
+            if(isBrowser || isJsDom) await anticipatedDownload;
         });
     });
 });

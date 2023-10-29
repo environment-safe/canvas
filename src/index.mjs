@@ -1,5 +1,10 @@
 /* global Buffer : false */
-import { isBrowser, isJsDom } from 'browser-or-node';
+import {
+    isBrowser, 
+    isJsDom,
+    variables
+} from '@environment-safe/runtime-context';
+import { File } from '@environment-safe/file';
 import { saveAs } from './file-saver.mjs';
 import * as mod from 'module';
 let canvas = null;
@@ -55,9 +60,21 @@ const Canvas = function(options={}){
 };
 let Image = null;
 
+Canvas.is = (canvas)=>{
+    if(!(isBrowser || isJsDom)){
+        // class instance not exposed :P 
+        return !!(canvas.getContext && canvas.toBuffer && canvas.toDataURL);
+    }else{
+        return canvas instanceof variables.HTMLCanvasElement;
+    }
+};
+
 //env safe save fn
+//if we're in an older browser we can rely on filesaver.js
+Canvas.legacyMode = false;
 Canvas.save = async (location, canvas, type='image/png')=>{
-    await new Promise((resolve, reject)=>{
+    // eslint-disable-next-line no-async-promise-executor
+    await new Promise( async (resolve, reject)=>{
         if(!(isBrowser || isJsDom)){
             canvas.toDataURL(type, function(err, dataURL){
                 if(err) return reject(err);
@@ -71,9 +88,102 @@ Canvas.save = async (location, canvas, type='image/png')=>{
                 });
             });
         }else{
+            if(Canvas.legacyMode){
+                canvas.toBlob((blob)=>{
+                    saveAs(blob, location);
+                    resolve(blob);
+                }, type);
+            }else{
+                const file = await Canvas.toFile(location, canvas);
+                await file.save();
+                resolve(file.buffer);
+            }
+        }
+    });
+};
+
+Canvas.from = async (ob)=>{
+    if(!(isBrowser || isJsDom)){
+        if(ob instanceof ImageFile){
+            return await new Promise((resolve, reject)=>{
+                const size = ob.size();
+                const canvas = new Canvas(size);
+                const context = canvas.getContext('2d');
+                const img = new Image();
+                img.onload = () =>{
+                    context.drawImage(img, 0, 0);
+                    resolve(canvas);
+                };
+                img.onerror = err => { throw err; };
+                img.src = ob.buffer;
+            });
+        }
+    }else{
+        if(ob instanceof ImageFile){
+            const { height, width } = ob.size();
+            const imageData = new ImageData(new Uint8ClampedArray(ob.buffer), width, height);
+            const canvas = new Canvas({ height, width });
+            const context = canvas.getContext('2d');
+            context.putImageData(imageData, 0, 0);
+            return canvas;
+        }
+    }
+};
+
+Canvas.toFile = async (location, canvas)=>{
+    const file = new ImageFile(location, {
+        height: canvas.height, 
+        width: canvas.width
+    });
+    file.buffer = await Canvas.toBuffer(canvas);
+    return file;
+};
+
+const mimeTypes = [
+    {
+        check: [0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a],
+        mime: 'image/png'
+    },
+    {
+        check: [0xff, 0xd8, 0xff],
+        mime: 'image/jpeg'
+    },
+    {
+        check: [0x47, 0x49, 0x46, 0x38],
+        mime: 'image/gif'
+    }
+];
+
+const checkOne = (headers)=>{
+    return (buffers, options = { offset: 0 }) =>
+        headers.every(
+            (header, index) => header === buffers[options.offset + index]
+        );
+};
+
+const mimeFromBuffer = (buffer)=>{
+    return mimeTypes.reduce((agg, type)=> agg || (checkOne(type.check) && type.mime), false);
+};
+
+Canvas.toBuffer = async (canvas)=>{
+    let type = 'image/png';
+    return await new Promise((resolve, reject)=>{
+        if(!(isBrowser || isJsDom)){
+            canvas.toDataURL(type, function(err, dataURL){
+                if(err) return reject(err);
+                var base64 = dataURL.substring(dataURL.indexOf(','));
+                var buffer = new Buffer(base64, 'base64');
+                resolve(buffer);
+            });
+        }else{
+            //const imageData = context.getImageData(x, y, w, h);
+            //const buffer = imageData.data.buffer;  // ArrayBuffer
             canvas.toBlob((blob)=>{
-                saveAs(blob, location);
-                resolve(blob);
+                const reader = new FileReader();
+                reader.addEventListener('loadend', () => {
+                    resolve(reader.result);
+                });
+                reader.readAsArrayBuffer(blob);
             }, type);
         }
     });
@@ -114,6 +224,34 @@ Canvas.load = async (location, incomingCanvas)=>{
     return canvas;
 };
 //env safe save fn
+
+export class ImageFile extends File{
+    constructor(path, options={}){
+        super(path, options);
+    }
+    
+    toCanvas(){
+        return Canvas.from(this);
+    }
+    
+    mime(){
+        return mimeFromBuffer(this.buffer);
+    }
+    
+    size(){
+        //todo: detect type and size from bytes, if not present
+        return {
+            height: this.options.height,
+            width: this.options.width
+        };
+    }
+    
+    static async from(ob, options={}){
+        if(Canvas.is(ob)){
+            return Canvas.toFile(this.path, ob);
+        }
+    }
+}
 
 //env safe Image reference
 if(!(isBrowser || isJsDom)){

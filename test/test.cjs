@@ -1,4 +1,4 @@
-const { isBrowser, isJsDom } = require('browser-or-node');
+const { isBrowser, isJsDom } = require('@environment-safe/runtime-context');
 const chai = require('chai');
 const should = chai.should();
 const { Canvas } = require('../dist/index.cjs');

@@ -1,6 +1,6 @@
 {
     "name": "@environment-safe/canvas",
-    "version": "3.0.1",
+    "version": "4.0.0",
     "type": "module",
     "main": "dist/index.mjs",
     "module": "src/index.mjs",
@@ -68,20 +68,25 @@
         "stubs": [
             "express",
             "module",
+            "os",
+            "fs",
             "path",
             "@babel/cli",
             "@babel"
         ],
         "shims": {
             "chai": "node_modules/chai/chai.js",
+            "@environment-safe/file": "node_modules/@environment-safe/file/src/index.mjs",
             "browser-or-node": "node_modules/browser-or-node/src/index.js"
         }
     },
     "devDependencies": {
         "@environment-safe/chai": "^0.1.0",
-        "@open-automaton/moka": "^0.0.2",
+        "@environment-safe/package": "^0.2.0",
+        "@open-automaton/moka": "^0.4.1",
         "canvas": "^2.11.2",
         "chai": "^4.3.7",
+        "detect-browser": "^5.3.0",
         "eslint": "^8.44.0",
         "husky": "^8.0.3",
         "mocha": "^10.2.0"
@@ -92,15 +97,16 @@
         "require-test": "./node_modules/.bin/mocha test/test.cjs",
         "test": "npm run import-test; npm run headless-browser-test; npm run require-test",
         "headless-browser-test": "npm run headless-chrome-test; npm run headless-firefox-test; npm run headless-safari-test",
-        "headless-chrome-test": "moka --server . --browser chrome  --relaxed --prefix ../ test/test.mjs",
-        "headless-firefox-test": "moka --server . --browser firefox --relaxed --prefix ../ test/test.mjs",
-        "headless-safari-test": "moka --server . --browser safari --relaxed --prefix ../ test/test.mjs",
-        "browser-test": "moka --server . --local-browser --relaxed --prefix ../ test/test.mjs",
+        "headless-chrome-test": "moka --server . --browser chrome test/test.mjs",
+        "headless-firefox-test": "moka --server . --browser firefox test/test.mjs",
+        "headless-safari-test": "moka --server . --browser safari test/test.mjs",
+        "browser-test": "moka --server . --local-browser test/test.mjs",
         "container-test": "docker build . -t environment-safe-package.json -f ./containers/test.dockerfile; docker logs --follow \"$(docker run -d environment-safe-package.json)\"",
         "prepare": "husky install"
     },
     "dependencies": {
-        "browser-or-node": "^2.1.1"
+        "@environment-safe/file": "^0.1.2",
+        "@environment-safe/runtime-context": "^0.0.1"
     },
     "peerDependencies": {
         "canvas": "^2.11.2"
