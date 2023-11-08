@@ -4,7 +4,7 @@ import {
     isJsDom,
     variables
 } from '@environment-safe/runtime-context';
-import { File } from '@environment-safe/file';
+import { File, FileBuffer } from '@environment-safe/file';
 import { saveAs } from './file-saver.mjs';
 import * as mod from 'module';
 let canvas = null;
@@ -13,8 +13,6 @@ let fs = null;
 let newCanvas = null;
 const ensureRequire = ()=> (!require) && (require = mod.createRequire(import.meta.url));
 const ensureCanvas = ()=> (!canvas) && ensureRequire() && (canvas = require('canvas'));
-//const ensureFilesystem = ()=> (!fs) && ensureRequire() && (fs = require('fs'));
-
 function longestCommonSubstring(str1, str2){
     if (str1 === str2) return str2;
     if (!str2.split('').some(ele => str1.includes(ele))) return '';
@@ -41,11 +39,88 @@ function longestCommonSubstring(str1, str2){
     return storage.sort((a, b) => b.length - a.length)[0];
 }
 
+export const pixelSimilarity = async (a, b, options={})=>{
+    if(a === b){
+        if(options.notIdentity) throw new Error('Image compared to self');
+        return 1;
+    }
+    if(Canvas.is(a) && Canvas.is(b)){
+        const actx = a.getContext('2d');
+        const bctx = b.getContext('2d');
+        return pixelSimilarity(
+            actx.getImageData(0, 0, a.width, a.height ),
+            bctx.getImageData(0, 0, b.width, b.height),
+            options
+        );
+    }
+    if(ImageFile.is(a) && ImageFile.is(b)){
+        return pixelSimilarity(
+            a.toCanvas(),
+            b.toCanvas(),
+            options
+        );
+    }
+    if(FileBuffer.is(a) && FileBuffer.is(b)){
+        const ac = await Canvas.from(a);
+        const bc = await Canvas.from(b);
+        return pixelSimilarity(
+            ac,
+            bc,
+            options
+        );
+    }
+    
+    if( //ImageData
+        a.data && a.width && a.height &&
+        b.data && b.width && b.height
+    ){
+        if(
+            (a.width !== b.width) ||
+            (a.height !== b.height)
+        )throw new Error('dimensions do not match!');
+        if(options.notEmpty){
+            if(a.width === 0) throw new Error('Empty images compared(no width)');
+            if(a.height === 0) throw new Error('Empty images compared(no height)');
+        }
+        let avgRatio = 0;
+        let count = 0;
+        let thisRatio = null;
+        let sawSomething = false;
+        // here we're computing the ratio of pixel difference
+        // where the max of 1 represents a change from opaque
+        // white to transparent black
+        for(let lcv=0; lcv < a.data.length; lcv += 4){
+            thisRatio = (
+                Math.abs(a.data[lcv] - b.data[lcv])/255 + 
+                Math.abs(a.data[lcv+1] - b.data[lcv+1])/255 + 
+                Math.abs(a.data[lcv+2] - b.data[lcv+2])/255 + 
+                Math.abs(a.data[lcv+3] - b.data[lcv+3])/255
+            ) / 4;
+            if((!sawSomething) && (
+                a.data[lcv] ||
+                a.data[lcv+1] ||
+                a.data[lcv+2] ||
+                a.data[lcv+3] ||
+                b.data[lcv] ||
+                b.data[lcv+1] ||
+                b.data[lcv+2] ||
+                b.data[lcv+3]
+            )){
+                sawSomething = true;
+            }
+            count++;
+            //a little drift from float math, but good enough
+            avgRatio = (avgRatio + thisRatio)/count;
+        }
+        if(options.notBlank && !sawSomething) throw new Error('Blank images compared');
+        return 1 - avgRatio; //invert the ratio for similarity
+    }
+};
+
 const Canvas = function(options={}){
     if(!(isBrowser || isJsDom)){
         ensureCanvas();
         newCanvas = canvas.createCanvas(options.width, options.height);
-        
     }else{
         newCanvas = document.createElement('canvas');
         const ctx = newCanvas.getContext('2d');
@@ -61,6 +136,7 @@ const Canvas = function(options={}){
 let Image = null;
 
 Canvas.is = (canvas)=>{
+    //return !!(canvas.getContext && canvas.toBuffer && canvas.toDataURL);
     if(!(isBrowser || isJsDom)){
         // class instance not exposed :P 
         return !!(canvas.getContext && canvas.toBuffer && canvas.toDataURL);
@@ -102,21 +178,52 @@ Canvas.save = async (location, canvas, type='image/png')=>{
     });
 };
 
+const imageFromSrc = (src)=>{
+    return new Promise((resolve, reject)=>{
+        const img = new Image();
+        img.onload = () =>{
+            resolve(img);
+        };
+        img.onerror = err => { reject(err); };
+        img.src = src;
+    });
+};
+
+/*const encode = (input)=>{
+    let array = new Uint8Array(input);
+    const chars = array.reduce((data, byte)=> {
+        return data + String.fromCharCode(byte);
+    }, '');
+    return btoa(chars);
+};*/
+
 Canvas.from = async (ob)=>{
     if(!(isBrowser || isJsDom)){
+        ensureCanvas();
         if(ob instanceof ImageFile){
             return await new Promise((resolve, reject)=>{
                 const size = ob.size();
-                const canvas = new Canvas(size);
-                const context = canvas.getContext('2d');
+                const newCanvas = new Canvas(size);
+                const context = newCanvas.getContext('2d');
                 const img = new Image();
                 img.onload = () =>{
                     context.drawImage(img, 0, 0);
-                    resolve(canvas);
+                    resolve(newCanvas);
                 };
                 img.onerror = err => { throw err; };
                 img.src = ob.buffer;
             });
+        }
+
+        if(FileBuffer.is(ob)){
+            const image = await imageFromSrc(ob);
+            const newCanvas = new Canvas({
+                width: image.width, 
+                height: image.height 
+            });
+            const ctx = newCanvas.getContext('2d');
+            ctx.drawImage(image, 0, 0, image.width, image.height );
+            return newCanvas;
         }
     }else{
         if(ob instanceof ImageFile){
@@ -127,6 +234,28 @@ Canvas.from = async (ob)=>{
             context.putImageData(imageData, 0, 0);
             return canvas;
         }
+        if(FileBuffer.is(ob)){
+            return await new Promise((resolve, reject)=>{
+                const bytes = new Uint8Array(ob);
+                let blob1 = new Blob([bytes],{type:'image/png'});
+                //var bytes = ob;
+                var image = new Image();
+                var reader = new FileReader();
+                image.onload = () =>{
+                    const newCanvas = new Canvas({
+                        width: image.width, 
+                        height: image.height 
+                    });
+                    const ctx = newCanvas.getContext('2d');
+                    ctx.drawImage(image, 0, 0);
+                    resolve(newCanvas);
+                };
+                reader.onload = (e)=>{
+                    image.src = e.target.result;
+                };
+                reader.readAsDataURL(blob1);
+            });
+        }
     }
 };
 
@@ -135,7 +264,11 @@ Canvas.toFile = async (location, canvas)=>{
         height: canvas.height, 
         width: canvas.width
     });
-    file.buffer = await Canvas.toBuffer(canvas);
+    try{
+        file.body(await Canvas.toBuffer(canvas));
+    }catch(ex){
+        console.log('ER', ex);
+    }
     return file;
 };
 
@@ -176,9 +309,7 @@ Canvas.toBuffer = async (canvas)=>{
                 resolve(buffer);
             });
         }else{
-            //const imageData = context.getImageData(x, y, w, h);
-            //const buffer = imageData.data.buffer;  // ArrayBuffer
-            canvas.toBlob((blob)=>{
+            canvas.toBlob( async (blob)=>{
                 const reader = new FileReader();
                 reader.addEventListener('loadend', () => {
                     resolve(reader.result);
@@ -250,6 +381,10 @@ export class ImageFile extends File{
         if(Canvas.is(ob)){
             return Canvas.toFile(this.path, ob);
         }
+    }
+    
+    static is(ob){
+        return ob instanceof ImageFile;
     }
 }
 
