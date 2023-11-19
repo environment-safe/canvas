@@ -214,7 +214,6 @@ Canvas.from = async (ob)=>{
                 img.src = ob.buffer;
             });
         }
-
         if(FileBuffer.is(ob)){
             const image = await imageFromSrc(ob);
             const newCanvas = new Canvas({
@@ -237,10 +236,15 @@ Canvas.from = async (ob)=>{
         if(FileBuffer.is(ob)){
             return await new Promise((resolve, reject)=>{
                 const bytes = new Uint8Array(ob);
-                let blob1 = new Blob([bytes],{type:'image/png'});
+                const type = File.deriveMIMEType(bytes) || 'image/png';
+                if(type === 'text/plain') throw new Error('could not find an image type in provided bytes!');
+                let blob1 = new Blob([ bytes ],{ type });
                 //var bytes = ob;
                 var image = new Image();
                 var reader = new FileReader();
+                // eslint hack, because this shouldn't error like it does
+                //eslint-disable-next-line no-unused-vars
+                let src = null;
                 image.onload = () =>{
                     const newCanvas = new Canvas({
                         width: image.width, 
@@ -248,9 +252,18 @@ Canvas.from = async (ob)=>{
                     });
                     const ctx = newCanvas.getContext('2d');
                     ctx.drawImage(image, 0, 0);
+                    //console.log('CD', Canvas.)
                     resolve(newCanvas);
                 };
+                image.onerror = (e) =>{
+                    const error = new Error('Data failed to parse!');
+                    //console.log(src);
+                    error.eventTarget = e.target;
+                    reject(error);
+                };
                 reader.onload = (e)=>{
+                    //console.log('R', e.target.result);
+                    src = e.target.result;
                     image.src = e.target.result;
                 };
                 reader.readAsDataURL(blob1);
@@ -258,48 +271,24 @@ Canvas.from = async (ob)=>{
         }
     }
 };
-
+const types = ['png', 'jpeg', 'gif'];
 Canvas.toFile = async (location, canvas)=>{
+    let type = (location||'').split('.').pop().toLowerCase();
+    if(type === 'jpg') type = 'jpeg';
+    if(types.indexOf(type) === -1) type = 'png';
     const file = new ImageFile(location, {
         height: canvas.height, 
         width: canvas.width
     });
     try{
-        file.body(await Canvas.toBuffer(canvas));
+        file.body(await Canvas.toBuffer(canvas, 'image/'+type));
     }catch(ex){
         console.log('ER', ex);
     }
     return file;
 };
 
-const mimeTypes = [
-    {
-        check: [0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a],
-        mime: 'image/png'
-    },
-    {
-        check: [0xff, 0xd8, 0xff],
-        mime: 'image/jpeg'
-    },
-    {
-        check: [0x47, 0x49, 0x46, 0x38],
-        mime: 'image/gif'
-    }
-];
-
-const checkOne = (headers)=>{
-    return (buffers, options = { offset: 0 }) =>
-        headers.every(
-            (header, index) => header === buffers[options.offset + index]
-        );
-};
-
-const mimeFromBuffer = (buffer)=>{
-    return mimeTypes.reduce((agg, type)=> agg || (checkOne(type.check) && type.mime), false);
-};
-
-Canvas.toBuffer = async (canvas)=>{
-    let type = 'image/png';
+Canvas.toBuffer = async (canvas, type = 'image/png')=>{
     return await new Promise((resolve, reject)=>{
         if(!(isBrowser || isJsDom)){
             canvas.toDataURL(type, function(err, dataURL){
@@ -363,10 +352,6 @@ export class ImageFile extends File{
     
     toCanvas(){
         return Canvas.from(this);
-    }
-    
-    mime(){
-        return mimeFromBuffer(this.buffer);
     }
     
     size(){

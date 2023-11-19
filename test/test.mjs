@@ -19,6 +19,9 @@ describe('environment-safe-canvas', ()=>{
     configure({
         downloads: (dl)=>{
             download.observe(dl);
+        },
+        write: (dl)=>{
+            download.observe(dl);
         }
     });
     describe('canvas interface', ()=>{
@@ -96,7 +99,7 @@ describe('environment-safe-canvas', ()=>{
         });
     });
     
-    describe('works with the file interface', ()=>{
+    describe('works with the Canvas file interface', ()=>{
         it('can load a canvas, then save a file', async function(){
             this.timeout(8000);
             Canvas.legacyMode = true;
@@ -152,6 +155,32 @@ describe('environment-safe-canvas', ()=>{
                 }
             );
             similarity.should.equal(1);
+        });
+    });
+    
+    describe('works with ImageFile', ()=>{
+        it('can load and save a file', async function(){
+            this.timeout(8000);
+            const file = new ImageFile('./dice.png');
+            await file.load();
+            file.path = 'foo.png';
+            const anticipatedDownload = download.expect();
+            await file.save();
+            const result = await anticipatedDownload;
+            //const path = result.path;
+            const resultBuffer = await result.arrayBuffer();
+            //console.log('@@@', resultBuffer, await result.base64());
+            
+            const originResultSimilarity = await pixelSimilarity(
+                file.buffer, 
+                resultBuffer,
+                { 
+                    notBlank: true,
+                    notEmpty: true
+                }
+            );
+            should.exist(originResultSimilarity);
+            originResultSimilarity.should.equal(1);
         });
     });
 });
