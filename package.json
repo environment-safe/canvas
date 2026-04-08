@@ -93,7 +93,7 @@
     },
     "scripts": {
         "lint": "./node_modules/.bin/eslint src/*.mjs test/*.mjs",
-        "import-test": "moka test/test.mjs",
+        "import-test": "mocha test/test.mjs",
         "require-test": "./node_modules/.bin/mocha test/test.cjs",
         "test": "npm run import-test; npm run headless-browser-test; npm run require-test",
         "headless-browser-test": "npm run headless-chrome-test; npm run headless-firefox-test; npm run headless-safari-test",
@@ -105,8 +105,8 @@
         "prepare": "husky install"
     },
     "dependencies": {
-        "@environment-safe/file": "^0.3.1",
-        "@environment-safe/runtime-context": "^0.0.1"
+        "@environment-safe/file": "^0.4.1",
+        "@environment-safe/runtime-context": "^0.0.4"
     },
     "peerDependencies": {
         "canvas": "^2.11.2"

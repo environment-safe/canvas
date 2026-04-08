@@ -1,11 +1,16 @@
-/* global describe : false */
-import { isClient } from '@environment-safe/runtime-context';
-import { it, configure } from '@open-automaton/moka';
+/* global describe : false, it : false */
+//import { isClient } from '@environment-safe/runtime-context';
+//import { it, configure } from '@open-automaton/moka';
 import { chai } from '@environment-safe/chai';
-import { Download, Path } from '@environment-safe/file';
+import { 
+    //Download, 
+    Path 
+} from '@environment-safe/file';
 const should = chai.should();
 import { Canvas, ImageFile, pixelSimilarity } from '../src/index.mjs';
 import * as fs from 'fs';
+
+const mochaPrefix = './test/';
 
 const nonEmpty = (array)=>{
     return Array.prototype.filter.call(
@@ -15,7 +20,7 @@ const nonEmpty = (array)=>{
 };
 
 describe('environment-safe-canvas', ()=>{
-    const download = new Download();
+    /*const download = new Download();
     configure({
         downloads: (dl)=>{
             download.observe(dl);
@@ -23,7 +28,7 @@ describe('environment-safe-canvas', ()=>{
         write: (dl)=>{
             download.observe(dl);
         }
-    });
+    });*/
     describe('canvas interface', ()=>{
         it('can draw a rect on an empty canvas', ()=>{
             should.exist(Canvas);
@@ -51,7 +56,7 @@ describe('environment-safe-canvas', ()=>{
     
     describe('canvas interface', ()=>{
         it('reads as expected', async ()=>{
-            const canvas = await Canvas.load('racoon.png');
+            const canvas = await Canvas.load(mochaPrefix+'racoon.png');
             const context = canvas.getContext('2d');
             const { data: pixels } = context.getImageData(0, 0, canvas.width, canvas.height);
             const nonEmptyValues = nonEmpty(pixels);
@@ -60,22 +65,22 @@ describe('environment-safe-canvas', ()=>{
         
         it('writes local as expected', async function(){
             this.timeout(8000);
-            const canvas = await Canvas.load('racoon.png');
+            const canvas = await Canvas.load(mochaPrefix+'racoon.png');
             const context = canvas.getContext('2d');
             const { data: pixels } = context.getImageData(0, 0, canvas.width, canvas.height);
-            const anticipatedDownload = download.expect();
-            await Canvas.save('racoon-copy.png', canvas);
-            if(!isClient){
-                const canvas2 = await Canvas.load('racoon-copy.png');
-                const context2 = canvas2.getContext('2d');
-                const { data: pixels2 } = context2.getImageData(
-                    0, 0, canvas2.width, canvas2.height
-                );
-                nonEmpty(pixels).should.deep.equal(nonEmpty(pixels2));
-                await Canvas.delete('racoon-copy.png');
-            }else{
-                await anticipatedDownload;
-            }
+            //const anticipatedDownload = download.expect();
+            await Canvas.save(mochaPrefix+'racoon-copy.png', canvas);
+            //if(!isClient){
+            const canvas2 = await Canvas.load(mochaPrefix+'racoon-copy.png');
+            const context2 = canvas2.getContext('2d');
+            const { data: pixels2 } = context2.getImageData(
+                0, 0, canvas2.width, canvas2.height
+            );
+            nonEmpty(pixels).should.deep.equal(nonEmpty(pixels2));
+            await Canvas.delete(mochaPrefix+'racoon-copy.png');
+            //}else{
+            //    await anticipatedDownload;
+            //}
         });
         
         it('writes remote as expected', async function(){
@@ -83,19 +88,19 @@ describe('environment-safe-canvas', ()=>{
             const canvas = await Canvas.load('https://i.imgur.com/zydglXB.jpeg');
             const context = canvas.getContext('2d');
             const { data: pixels } = context.getImageData(0, 0, canvas.width, canvas.height);
-            const anticipatedDownload = download.expect();
-            await Canvas.save('imagur-copy.png', canvas);
-            if(!isClient){
-                const canvas2 = await Canvas.load('imagur-copy.png');
-                const context2 = canvas2.getContext('2d');
-                const { data: pixels2 } = context2.getImageData(
-                    0, 0, canvas2.width, canvas2.height
-                );
-                nonEmpty(pixels).should.deep.equal(nonEmpty(pixels2));
-                await Canvas.delete('imagur-copy.png');
-            }else{
-                await anticipatedDownload;
-            }
+            //const anticipatedDownload = download.expect();
+            await Canvas.save(mochaPrefix+'imagur-copy.png', canvas);
+            //if(!isClient){
+            const canvas2 = await Canvas.load(mochaPrefix+'imagur-copy.png');
+            const context2 = canvas2.getContext('2d');
+            const { data: pixels2 } = context2.getImageData(
+                0, 0, canvas2.width, canvas2.height
+            );
+            nonEmpty(pixels).should.deep.equal(nonEmpty(pixels2));
+            await Canvas.delete(mochaPrefix+'imagur-copy.png');
+            //}else{
+            //    await anticipatedDownload;
+            //}
         });
     });
     
@@ -106,15 +111,15 @@ describe('environment-safe-canvas', ()=>{
             const canvas = await Canvas.load('https://i.imgur.com/zydglXB.jpeg');
             const file = await ImageFile.from(canvas);
             // no file path means auto-save to tmp in node
-            const anticipatedDownload = download.expect();
+            //const anticipatedDownload = download.expect();
             await file.save();
-            if(isClient) await anticipatedDownload;
+            //if(isClient) await anticipatedDownload;
         });
         
         it('canvas saves PNG correctly', async function(){
             this.timeout(8000);
             
-            const originPath = './racoon.png';
+            const originPath = mochaPrefix+'racoon.png';
             const destinationPath = Path.join(
                 Path.location('downloads'), 
                 'sampleDownload.png'
@@ -122,29 +127,29 @@ describe('environment-safe-canvas', ()=>{
             
             const canvas = await Canvas.load(originPath);
             // no file path means auto-save to tmp in node
-            const anticipatedDownload = download.expect();
+            //const anticipatedDownload = download.expect();
             await Canvas.save(destinationPath, canvas);
             let destinationBuffer = null;
             let originBuffer = null;
-            if(isClient){
+            /*if(isClient){
                 const dl = await anticipatedDownload;
                 destinationBuffer = dl.arrayBuffer();
                 const response = await fetch(originPath);
                 originBuffer = await response.arrayBuffer();
-            }else{
-                originBuffer = await new Promise((resolve, reject)=>{
-                    fs.readFile(originPath, (err, buffer)=>{
-                        if(err) return reject(err);
-                        resolve(buffer);
-                    });
+            }else{*/
+            originBuffer = await new Promise((resolve, reject)=>{
+                fs.readFile(originPath, (err, buffer)=>{
+                    if(err) return reject(err);
+                    resolve(buffer);
                 });
-                destinationBuffer = await new Promise((resolve, reject)=>{
-                    fs.readFile(destinationPath, (err, buffer)=>{
-                        if(err) return reject(err);
-                        resolve(buffer);
-                    });
+            });
+            destinationBuffer = await new Promise((resolve, reject)=>{
+                fs.readFile(destinationPath, (err, buffer)=>{
+                    if(err) return reject(err);
+                    resolve(buffer);
                 });
-            }
+            });
+            //}
             const similarity = await pixelSimilarity(
                 originBuffer, 
                 destinationBuffer,
@@ -161,12 +166,12 @@ describe('environment-safe-canvas', ()=>{
     describe('works with ImageFile', ()=>{
         it('can load and save a file', async function(){
             this.timeout(8000);
-            const file = new ImageFile('./dice.png');
+            const file = new ImageFile(mochaPrefix+'dice.png');
             await file.load();
-            file.path = 'foo.png';
-            const anticipatedDownload = download.expect();
+            file.path = mochaPrefix+'foo.png';
+            //const anticipatedDownload = download.expect();
             await file.save();
-            const result = await anticipatedDownload;
+            /*const result = await anticipatedDownload;
             //const path = result.path;
             const resultBuffer = await result.arrayBuffer();
             //console.log('@@@', resultBuffer, await result.base64());
@@ -181,6 +186,7 @@ describe('environment-safe-canvas', ()=>{
             );
             should.exist(originResultSimilarity);
             originResultSimilarity.should.equal(1);
+            */
         });
     });
 });

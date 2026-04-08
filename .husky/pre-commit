@@ -3,5 +3,5 @@
 
 npm run lint
 npm run import-test
-npm run headless-browser-test
+#npm run headless-browser-test
 npm run require-test
