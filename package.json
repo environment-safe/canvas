@@ -1,6 +1,6 @@
 {
     "name": "@environment-safe/canvas",
-    "version": "4.2.2",
+    "version": "4.2.3",
     "type": "module",
     "main": "dist/index.mjs",
     "module": "src/index.mjs",
@@ -105,8 +105,8 @@
         "prepare": "husky install"
     },
     "dependencies": {
-        "@environment-safe/file": "^0.4.2",
-        "@environment-safe/runtime-context": "^0.0.5"
+        "@environment-safe/file": "^0.4.3",
+        "@environment-safe/runtime-context": "^0.0.6"
     },
     "peerDependencies": {
         "canvas": "^2.11.2"
