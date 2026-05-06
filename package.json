@@ -1,6 +1,6 @@
 {
     "name": "@environment-safe/canvas",
-    "version": "4.2.3",
+    "version": "4.3.0",
     "type": "module",
     "main": "dist/index.mjs",
     "module": "src/index.mjs",
@@ -84,7 +84,7 @@
         "@environment-safe/chai": "^0.1.0",
         "@environment-safe/package": "^0.2.0",
         "@open-automaton/moka": "^0.5.1",
-        "canvas": "^2.11.2",
+        "canvas": "^3.1.0",
         "chai": "^4.3.7",
         "detect-browser": "^5.3.0",
         "eslint": "^8.44.0",
@@ -109,6 +109,6 @@
         "@environment-safe/runtime-context": "^0.0.6"
     },
     "peerDependencies": {
-        "canvas": "^2.11.2"
+        "canvas": "^3.1.0"
     }
 }
